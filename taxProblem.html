@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+  <style>
+    .products {
+      padding: 2vh 0 5vh 5vw;
+      width: 50vw;
+      display: inline-block;
+    }
+    .add-btn {
+      width: 5vw;
+      display: inline-block;
+    }
+    .product {
+      width: 100%;
+    }
+    .bill {
+      padding: 2vh 0 5vh 5vw;
+    }
+    .calculate-btn {
+      margin: 0 0 0 45vw;
+      width: 10vw;
+    }
+  </style>
+<head>
+<title>Bill Calculator</title>
+</head>
+<body>
+  <h3>Write your products here: </h3>
+  <div class="products">
+    <div class="product">
+      <label for="quantity">Quantity: </label>
+      <input name="quantity" class="quantity" type="number" value="1" min="1" />
+      <label for="product">Product Name: </label>
+      <input name="product" class="product-name" type="text" minlength="2" placeholder="product name" />
+      <label for="price">Price: </label>
+      <input name="price" class="price" type="text"/>
+    </div>
+  </div>
+  <div class="add-btn">
+    <button name="add" onclick="addProduct()">+</button>
+  </div>
+  <div class="bill">
+    <button name="calculate" class="calculate-btn" onclick="calculate()">Calculate</button>
+    <div class="result">
+      
+    </div>
+  </div>
+</body>
+<script>
+  const products = document.getElementsByClassName("products")[0];
+  const result = document.getElementsByClassName("result")[0];
+  // here is a list of items that have no taxes, i think a better way is to put
+  // another input called type and specify it, but this works fine for this example.
+  const noTaxesProductList = ["book", "pill", "chocolate", "orange", "capsule", "broccoli"];
+  let taxes = 0;
+  let rawPrice = 0;
+  let bill = "";
+  let totalTaxes = 0;
+  
+  const createProductRow = () => {
+    // this is kind of old, but easy to understand.
+    // basically created more rows with same inputs
+    // so user can add more items to the bill
+    let newProduct = document.createElement("div");
+    newProduct.classList.add("product");
+    newProduct.innerHTML = `<label for="quantity">Quantity: </label>
+        <input name="quantity" class="quantity" type="number" value="1" min="1" />
+        <label for="product">Product Name: </label>
+        <input name="product" class="product-name" type="text" minlength="2" placeholder="product name" />
+        <label for="price">Price: </label>
+        <input name="price" class="price" type="text" patter="^\d(\.\d)*$" />`;
+    return newProduct; 
+  }
+
+  const addProduct = () => {
+    products.appendChild(createProductRow());
+  }
+
+  calculateProductPrice = (productQuantity, productName, productPrice) => {
+    let realValue = 0;
+    let importedPrice = 0;
+    let regularTaxes = 0;
+    let haveRegularTaxes = true;
+    if (productName.includes("imported")) {
+      importedPrice = productPrice * 0.05
+      // the round part was not so clear to me, so i played with the calculator
+      // to find a way to find same result, it took me a while, but find out 
+      // that if i round imported tax to 1 decimal, the result was the same as yours.
+      importedPrice = Math.round(importedPrice * 10) / 10;
+    };
+    noTaxesProductList.forEach( element => {
+      if (productName.includes(element)) {
+        haveRegularTaxes = false;
+      }
+    })
+    if (haveRegularTaxes) {
+      regularTaxes = productPrice * 0.1;
+    }
+    realValue = (productPrice + importedPrice + regularTaxes) * productQuantity;
+    taxes += (importedPrice + regularTaxes) * productQuantity;
+    return realValue;
+  }
+
+  const printResult = () => {
+    bill+= "Sales Taxes: " + (Math.round(taxes * 100) / 100) + "<br/>";
+    bill+= "Total: " + (Math.round((rawPrice+taxes) * 100) / 100);
+    result.innerHTML = bill;
+    // i was thinking about making all inputs disabled too so user cant change
+    // it after calculated, but it will take another for or look ugly, so 
+    // i just disabled the calculate button.
+    // After first try, you can refresh page (f5) and try again.
+    document.getElementsByClassName("calculate-btn")[0].setAttribute("disabled", "disabled");
+  }
+  
+  const calculate = () => {
+    const productList = document.getElementsByClassName("product");
+    // i did a normal 'for' because its easier to move within html elements
+    // and can call getElementsByClassName to get the correct child input and its value.
+    for(let i = 0; i<productList.length; i++) {
+      productQuantity = productList[i].getElementsByClassName("quantity")[0].value;
+      productName = productList[i].getElementsByClassName("product-name")[0].value;
+      productRawPrice = parseFloat(productList[i].getElementsByClassName("price")[0].value);
+      rawPrice+= (productQuantity * productRawPrice);
+      productPrice = calculateProductPrice(productQuantity, productName, productRawPrice);
+      bill += productQuantity + " " + productName + " " + (Math.round(productPrice * 100) / 100) + "<br/>";
+    }
+    printResult();
+  }
+
+</script>
+</html>
